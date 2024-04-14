@@ -108,11 +108,7 @@ const updateDNSRecord = async (req, res) => {
               Name: req.body.name,
               Type: req.body.type,
               TTL: req.body.ttl,
-              ResourceRecords: [
-                {
-                  Value: req.body.value,
-                },
-              ],
+              ResourceRecords: req.body.ResourceRecords,
             },
           },
         ],
