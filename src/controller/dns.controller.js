@@ -171,8 +171,6 @@ const deleteDNSRecord = async (req, res) => {
 
     res.status(200).json({ message: "Delete success" });
   } catch (error) {
-    console.error("Error deleting DNS record:", error);
-
     res.status(500).json({ error: error.message });
   }
 };
@@ -203,7 +201,6 @@ const bulkDomainCreate = async (req, res) => {
     }
     return res.status(201).json({ message: "successful", results });
   } catch (error) {
-    console.error("error", error);
     return res.status(500).json({ error: error.message });
   }
 };
@@ -252,7 +249,6 @@ const bulkRecordCreate = async (req, res) => {
 
     return res.status(201).json({ message: "successful", results });
   } catch (error) {
-    console.error("Error", error);
     return res.status(500).json({ error: error.message });
   }
 };
