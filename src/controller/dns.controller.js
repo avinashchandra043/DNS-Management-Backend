@@ -1,5 +1,6 @@
 const dnsService = require("../services/dns.service");
 const AWS = require("aws-sdk");
+const { parse } = require("csv-parse");
 
 const createAWSClient = (user) => {
   const { accessKeyId, secretAccessKey, region } = user.aws;
@@ -9,6 +10,24 @@ const createAWSClient = (user) => {
     region: region,
   });
   return awsClient;
+};
+
+const parseCSVFile = async (buffer) => {
+  const csvData = buffer.toString();
+  return new Promise((resolve, reject) => {
+    parse(
+      csvData,
+      {
+        columns: true,
+      },
+      (err, records) => {
+        if (err) {
+          return reject(err);
+        }
+        resolve(records);
+      }
+    );
+  });
 };
 
 const listHostedZones = async (req, res) => {
@@ -158,6 +177,86 @@ const deleteDNSRecord = async (req, res) => {
   }
 };
 
+const bulkDomainCreate = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "File is missing" });
+    }
+    const mimetype = req.file.mimetype;
+    let domains;
+    if (mimetype === "text/csv") {
+      domains = await parseCSVFile(req.file.buffer);
+    } else if (mimetype === "application/json") {
+      domains = JSON.parse(req.file.buffer.toString());
+    } else {
+      return res.status(400).json({ error: "Unsupported file format" });
+    }
+
+    const route53 = createAWSClient(req.user);
+    const results = [];
+    for (const domain of domains) {
+      const hostedZone = await dnsService.createHostedZone(
+        req.user,
+        domain.domainName
+      );
+      results.push(hostedZone);
+    }
+    return res.status(201).json({ message: "successful", results });
+  } catch (error) {
+    console.error("error", error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+const bulkRecordCreate = async (req, res) => {
+  try {
+    const mimetype = req.file.mimetype;
+    let records;
+
+    if (mimetype === "text/csv") {
+      records = await parseCSVFile(req.file.buffer);
+    } else if (mimetype === "application/json") {
+      records = JSON.parse(req.file.buffer.toString());
+    } else {
+      return res.status(400).json({ error: "Unsupported file format" });
+    }
+
+    const route53 = createAWSClient(req.user);
+
+    const results = [];
+    for (const record of records) {
+      const params = {
+        HostedZoneId: record.hostedZoneId,
+        ChangeBatch: {
+          Changes: [
+            {
+              Action: "CREATE",
+              ResourceRecordSet: {
+                Name: record.name,
+                Type: record.type,
+                TTL: record.ttl,
+                ResourceRecords: [
+                  {
+                    Value: record.value,
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      };
+
+      const data = await route53.changeResourceRecordSets(params).promise();
+      results.push(data);
+    }
+
+    return res.status(201).json({ message: "successful", results });
+  } catch (error) {
+    console.error("Error", error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   listHostedZones,
   createHostedZone,
@@ -165,4 +264,6 @@ module.exports = {
   listDNSRecords,
   updateDNSRecord,
   deleteDNSRecord,
+  bulkDomainCreate,
+  bulkRecordCreate,
 };
