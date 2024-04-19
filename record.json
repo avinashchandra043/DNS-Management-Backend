@@ -1,0 +1,23 @@
+[
+    {
+        "hostedZoneId": "Z035083924CGDDP3TS3G2",
+        "name": "example511.com",
+        "type": "A",
+        "ttl": 300,
+        "value": "192.0.2.1"
+    },
+    {
+        "hostedZoneId": "Z035083924CGDDP3TS3G2",
+        "name": "www.example511.com",
+        "type": "CNAME",
+        "ttl": 300,
+        "value": "example.com"
+    },
+    {
+        "hostedZoneId": "Z035083924CGDDP3TS3G2",
+        "name": "mail.example511.com",
+        "type": "MX",
+        "ttl": 3600,
+        "value": "10 mail.example.com"
+    }
+]
