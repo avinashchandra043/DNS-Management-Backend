@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-
+require("dotenv").config();
 const DEV = "DEV";
 const PROD = "PROD";
 
@@ -11,8 +11,7 @@ const environmentConfig = {
     frontEndUrl: "",
   },
   DEV: {
-    mongodbUrl:
-      "mongodb+srv://avinashchandrabarik01:lAmd168QPqNaJmtZ@cluster0.uwzofsi.mongodb.net/",
+    mongodbUrl: process.env.MONGODB_URI,
     frontEndUrl: "http://localhost:3000",
   },
 };
